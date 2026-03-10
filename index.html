@@ -1,178 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Neill Studio Radio</title>
 
 <style>
 body{
 margin:0;
-font-family:Arial;
-background:#0b0b0b;
-color:white;
+font-family:system-ui, Arial;
+background:#0c0c0c;
+color:#fff;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
 }
 
-.container{
-width:340px;
+.app{
+width:360px;
 background:#151515;
-border-radius:20px;
-padding:20px;
-text-align:center;
-box-shadow:0 0 30px rgba(0,0,0,0.6);
+border-radius:18px;
+padding:18px;
+box-shadow:0 0 40px rgba(0,0,0,.6);
 }
 
-.album{
-width:160px;
-border-radius:12px;
-margin:auto;
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
 }
 
-.title{
-font-size:20px;
-margin-top:10px;
-}
-
-.artist{
-color:#aaa;
-font-size:14px;
-}
-
-.tuner{
-margin-top:20px;
-}
-
-input[type=range]{
+.search{
 width:100%;
+padding:8px;
+border-radius:8px;
+border:none;
+margin:10px 0;
+}
+
+.cassette{
+background:#fff;
+border-radius:14px;
+padding:12px;
+color:#000;
+text-align:center;
+position:relative;
+}
+
+.reels{
+display:flex;
+justify-content:space-between;
+margin-top:8px;
+}
+
+.reel{
+width:40px;
+height:40px;
+border-radius:50%;
+border:4px solid #000;
+position:relative;
+animation:spin 3s linear infinite;
+}
+
+.reel::after{
+content:'';
+position:absolute;
+width:6px;
+height:6px;
+background:#000;
+border-radius:50%;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+}
+
+@keyframes spin{
+from{transform:rotate(0deg)}
+to{transform:rotate(360deg)}
+}
+
+.stationTitle{
+font-size:16px;
+font-weight:bold;
+margin-top:6px;
+}
+
+.song{
+font-size:13px;
+color:#555;
 }
 
 .controls{
-margin-top:20px;
+margin-top:12px;
+display:flex;
+justify-content:center;
+gap:10px;
 }
 
 button{
-padding:10px 16px;
+padding:8px 14px;
 border:none;
-border-radius:10px;
-margin:5px;
-background:#1f1f1f;
-color:white;
+border-radius:8px;
+background:#2a2a2a;
+color:#fff;
 cursor:pointer;
 }
 
-.modeSwitch{
-margin-top:15px;
-font-size:12px;
-color:#999;
+.list{
+max-height:150px;
+overflow:auto;
+margin-top:10px;
+font-size:14px;
+}
+
+.item{
+padding:6px;
+border-bottom:1px solid #222;
 cursor:pointer;
 }
 
-.visualizer{
-display:flex;
-justify-content:center;
-margin-top:20px;
-gap:4px;
+.favs{
+margin-top:8px;
+font-size:13px;
+color:#aaa;
 }
 
-.bar{
-width:4px;
-height:20px;
-background:#4cafef;
-animation:wave 1s infinite ease-in-out;
-}
-
-.bar:nth-child(2){animation-delay:.1s}
-.bar:nth-child(3){animation-delay:.2s}
-.bar:nth-child(4){animation-delay:.3s}
-.bar:nth-child(5){animation-delay:.4s}
-
-@keyframes wave{
-0%,100%{height:10px}
-50%{height:30px}
-}
-
-#globe{
-display:none;
-font-size:22px;
-padding:40px 0;
+.watermark{
+text-align:center;
+font-size:10px;
+margin-top:10px;
+color:#777;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
-<h2>Neill Studio Radio</h2>
+<div class="header">
+<div>📻 Neill Radio</div>
+<button onclick="toggleGlobe()">🌍</button>
+</div>
 
-<img class="album" src="https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg">
+<input class="search" id="search" placeholder="Search station or country..." />
 
-<div class="title">Select Station</div>
-<div class="artist">World Radio</div>
+<div class="cassette">
+<img id="art" src="" width="60">
+<div class="stationTitle" id="station">Select station</div>
+<div class="song" id="song">---</div>
 
-<div class="tuner">
-<input type="range" min="88" max="108" value="98">
+<div class="reels">
+<div class="reel"></div>
+<div class="reel"></div>
+</div>
 </div>
 
 <div class="controls">
 <button onclick="play()">▶ Play</button>
 <button onclick="stop()">⏹ Stop</button>
+<button onclick="saveFav()">⭐ Fav</button>
 </div>
 
-<audio id="radio" controls style="width:100%; margin-top:10px;"></audio>
+<audio id="audio" controls style="width:100%; margin-top:8px;"></audio>
 
-<div class="visualizer">
-<div class="bar"></div>
-<div class="bar"></div>
-<div class="bar"></div>
-<div class="bar"></div>
-<div class="bar"></div>
-</div>
+<div class="list" id="list"></div>
 
-<div class="modeSwitch" onclick="toggleMode()">
-🌍 Switch to Globe Mode
-</div>
+<div class="favs" id="favs"></div>
 
-<div id="globe">
-🌍 Globe Mode Coming Soon
-</div>
+<div class="watermark">Neill Studio</div>
 
 </div>
 
 <script>
+let stations=[]
+let current=null
+const audio=document.getElementById("audio")
 
-let radio = document.getElementById("radio")
+// load stations
+fetch("https://de1.api.radio-browser.info/json/stations/topclick/200")
+.then(r=>r.json())
+.then(data=>{
+stations=data
+renderList(stations)
+})
+
+function renderList(list){
+const box=document.getElementById("list")
+box.innerHTML=""
+list.forEach(s=>{
+const d=document.createElement("div")
+d.className="item"
+d.textContent=s.name+" ("+s.country+")"
+d.onclick=()=>selectStation(s)
+box.appendChild(d)
+})
+}
+
+function selectStation(s){
+current=s
+document.getElementById("station").textContent=s.name
+document.getElementById("art").src=s.favicon
+audio.src=s.url_resolved
+}
 
 function play(){
-
-radio.src="https://stream-uk1.radioparadise.com/mp3-192"
-
-radio.play()
-
+if(current) audio.play()
 }
 
 function stop(){
-
-radio.pause()
-
+audio.pause()
 }
 
-function toggleMode(){
+document.getElementById("search").addEventListener("input",e=>{
+let q=e.target.value.toLowerCase()
+renderList(stations.filter(s=>
+s.name.toLowerCase().includes(q) ||
+s.country.toLowerCase().includes(q)
+))
+})
 
-let globe = document.getElementById("globe")
-
-if(globe.style.display==="none"){
-globe.style.display="block"
-}else{
-globe.style.display="none"
+function saveFav(){
+if(!current) return
+let f=JSON.parse(localStorage.getItem("favs")||"[]")
+f.push(current)
+localStorage.setItem("favs",JSON.stringify(f))
+showFavs()
 }
 
+function showFavs(){
+let f=JSON.parse(localStorage.getItem("favs")||"[]")
+let div=document.getElementById("favs")
+div.innerHTML="⭐ Favorites: "+f.map(x=>x.name).join(", ")
 }
 
+showFavs()
+
+function toggleGlobe(){
+alert("3D Globe mode will open in next upgrade 🌍")
+}
 </script>
 
 </body>
