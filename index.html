@@ -1,235 +1,177 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Neill Studio World Radio</title>
-
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
-
-<script src="https://unpkg.com/globe.gl"></script>
-<script src="https://unpkg.com/topojson-client@3"></script>
+<title>Neill Studio Radio</title>
 
 <style>
-
 body{
 margin:0;
-background:black;
+font-family:Arial;
+background:#0b0b0b;
 color:white;
-font-family:monospace;
-overflow:hidden;
-}
-
-#globeViz{
-width:100vw;
+display:flex;
+justify-content:center;
+align-items:center;
 height:100vh;
 }
 
-.panel{
-position:absolute;
-top:20px;
-left:20px;
-background:#111;
-padding:15px;
-border-radius:15px;
-width:260px;
+.container{
+width:340px;
+background:#151515;
+border-radius:20px;
+padding:20px;
+text-align:center;
+box-shadow:0 0 30px rgba(0,0,0,0.6);
+}
+
+.album{
+width:160px;
+border-radius:12px;
+margin:auto;
 }
 
 .title{
-font-family:'DotGothic16';
-font-size:22px;
-letter-spacing:4px;
-margin-bottom:10px;
+font-size:20px;
+margin-top:10px;
 }
 
-.stationList{
-max-height:200px;
-overflow:auto;
-font-size:13px;
+.artist{
+color:#aaa;
+font-size:14px;
 }
 
-.station{
-padding:6px;
-border-bottom:1px solid #333;
+.tuner{
+margin-top:20px;
+}
+
+input[type=range]{
+width:100%;
+}
+
+.controls{
+margin-top:20px;
+}
+
+button{
+padding:10px 16px;
+border:none;
+border-radius:10px;
+margin:5px;
+background:#1f1f1f;
+color:white;
 cursor:pointer;
 }
 
-.station:hover{
-background:#222;
-}
-
-.knob{
-width:60px;
-height:60px;
-border-radius:50%;
-background:#222;
-display:flex;
-align-items:center;
-justify-content:center;
-margin-top:10px;
-transition:transform .4s;
-}
-
-.knob.playing{
-transform:rotate(140deg);
+.modeSwitch{
+margin-top:15px;
+font-size:12px;
+color:#999;
+cursor:pointer;
 }
 
 .visualizer{
 display:flex;
-gap:3px;
-margin-top:10px;
+justify-content:center;
+margin-top:20px;
+gap:4px;
 }
 
 .bar{
 width:4px;
-height:8px;
-background:white;
-animation:move .5s infinite alternate;
+height:20px;
+background:#4cafef;
+animation:wave 1s infinite ease-in-out;
 }
 
-@keyframes move{
-from{height:6px}
-to{height:22px}
+.bar:nth-child(2){animation-delay:.1s}
+.bar:nth-child(3){animation-delay:.2s}
+.bar:nth-child(4){animation-delay:.3s}
+.bar:nth-child(5){animation-delay:.4s}
+
+@keyframes wave{
+0%,100%{height:10px}
+50%{height:30px}
 }
 
-.watermark{
-position:absolute;
-bottom:10px;
-right:15px;
-font-size:12px;
-opacity:0.6;
+#globe{
+display:none;
+font-size:22px;
+padding:40px 0;
 }
-
-input{
-width:150px;
-padding:5px;
-margin-bottom:6px;
-}
-
-button{
-padding:4px 8px;
-cursor:pointer;
-}
-
 </style>
-
 </head>
 
 <body>
 
-<div id="globeViz"></div>
+<div class="container">
 
-<div class="panel">
+<h2>Neill Studio Radio</h2>
 
-<div class="title">WORLD RADIO</div>
+<img class="album" src="https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg">
 
-<input id="search" placeholder="Country">
-<button onclick="loadCountry()">Load</button>
+<div class="title">Select Station</div>
+<div class="artist">World Radio</div>
 
-<div class="knob" id="dial">🎛</div>
+<div class="tuner">
+<input type="range" min="88" max="108" value="98">
+</div>
+
+<div class="controls">
+<button onclick="play()">▶ Play</button>
+<button onclick="stop()">⏹ Stop</button>
+</div>
+
+<audio id="radio" controls style="width:100%; margin-top:10px;"></audio>
 
 <div class="visualizer">
 <div class="bar"></div>
 <div class="bar"></div>
 <div class="bar"></div>
 <div class="bar"></div>
+<div class="bar"></div>
 </div>
 
-<div class="stationList" id="stations"></div>
-
-<audio id="radio" controls></audio>
-
+<div class="modeSwitch" onclick="toggleMode()">
+🌍 Switch to Globe Mode
 </div>
 
-<div class="watermark">
-Neill Studio
+<div id="globe">
+🌍 Globe Mode Coming Soon
+</div>
+
 </div>
 
 <script>
 
-const globe = Globe()(document.getElementById('globeViz'))
-.globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+let radio = document.getElementById("radio")
 
-let radio=document.getElementById("radio")
+function play(){
 
-let markers=[]
+radio.src="https://stream-uk1.radioparadise.com/mp3-192"
 
-function loadStations(country){
-
-fetch("https://all.api.radio-browser.info/json/stations/bycountry/"+country)
-
-.then(res=>res.json())
-
-.then(data=>{
-
-let list=document.getElementById("stations")
-list.innerHTML=""
-
-data.slice(0,100).forEach(st=>{
-
-let div=document.createElement("div")
-div.className="station"
-div.innerText=st.name
-
-div.onclick=function(){
-
-radio.src=st.url
 radio.play()
 
-document.getElementById("dial").classList.add("playing")
+}
+
+function stop(){
+
+radio.pause()
 
 }
 
-list.appendChild(div)
+function toggleMode(){
 
-})
+let globe = document.getElementById("globe")
 
-})
-
+if(globe.style.display==="none"){
+globe.style.display="block"
+}else{
+globe.style.display="none"
 }
 
-function loadCountry(){
-
-let country=document.getElementById("search").value
-loadStations(country)
-
 }
-
-fetch('https://unpkg.com/world-atlas@2/countries-110m.json')
-.then(res => res.json())
-.then(data => {
-
-const countries = topojson.feature(data, data.objects.countries).features
-
-globe
-.polygonsData(countries)
-.polygonAltitude(0.01)
-.polygonCapColor(() => 'rgba(200,200,200,0.15)')
-.polygonSideColor(() => 'rgba(0,0,0,0.1)')
-.polygonStrokeColor(() => '#111')
-.onPolygonClick(d => {
-
-let name = d.properties.name
-
-loadStations(name)
-
-let lat = d.properties.latitude || 0
-let lng = d.properties.longitude || 0
-
-markers = [{
-lat: d.properties.latitude || d.properties.lat || 0,
-lng: d.properties.longitude || d.properties.lng || 0,
-size: 0.4,
-color: 'red'
-}]
-
-globe.pointsData(markers)
-
-})
-
-})
 
 </script>
 
